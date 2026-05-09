@@ -1,11 +1,31 @@
-# VR Forum Site
+# AhoyVR Forums
 
-## Install
+## Setup
 
+1. Install:
 ```bash
 npm install
-npm run build
-npm start
 ```
 
-Deploy directly to Vercel.
+2. Create `.env.local`
+Copy `.env.example`
+
+3. Run:
+```bash
+npm run dev
+```
+
+4. Deploy to Vercel
+
+## Supabase Tables
+
+### threads
+- id
+- title
+- content
+- created_at
+
+### profiles
+- id
+- username
+- avatar_url

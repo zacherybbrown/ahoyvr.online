@@ -1,19 +1,18 @@
 import './globals.css'
-import React from 'react'
+import Navbar from '@/components/Navbar'
 
 export const metadata = {
-  title: 'VR Forums',
-  description: 'VR community forums',
+  title: 'AhoyVR Forums',
+  description: 'VR community forums'
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Navbar />
+        {children}
+      </body>
     </html>
   )
 }
