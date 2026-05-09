@@ -1,8 +1,9 @@
 import './globals.css'
+import React from 'react'
 
 export const metadata = {
   title: 'VR Forums',
-  description: 'Futuristic VR forum platform'
+  description: 'VR community forums',
 }
 
 export default function RootLayout({

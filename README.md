@@ -1,21 +1,11 @@
 # VR Forum Site
 
-A futuristic VR-style forum website inspired by AhoyVR aesthetics.
-
-## Features
-- Forum threads
-- Search bar
-- Neon dark UI
-- Mobile responsive
-- Ready for Vercel deployment
-
-## Setup
+## Install
 
 ```bash
 npm install
-npm run dev
+npm run build
+npm start
 ```
 
-## Deploy
-
-Push to GitHub and import into Vercel.
+Deploy directly to Vercel.
