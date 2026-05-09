@@ -53,125 +53,204 @@
 
 </div>
 
-<script>
+<script type="module">
 
-const SUPABASE_URL = "https://udrdowlpdakrmuydpnua.supabase.co/rest/v1/";
-const SUPABASE_KEY = "sb_publishable_86WOO7GUNSzQsDR3n-UMwQ_bxEhjqB8";
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-const supabase = window.supabase.createClient(
+const SUPABASE_URL = "https://udrdowlpdakrmuydpnua.supabase.co"
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkcmRvd2xwZGFrcm11eWRwbnVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMDI5NDksImV4cCI6MjA5Mzc3ODk0OX0.qKZcVhDmE7Kt5wUk5fij-gJbdhdmlCi42U8QNmnhu2c"
+
+const supabase = createClient(
     SUPABASE_URL,
     SUPABASE_KEY
-);
+)
 
-async function signup() {
+const authBox = document.getElementById("authBox")
+const forumBox = document.getElementById("forumBox")
+const postsDiv = document.getElementById("posts")
 
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+// ========================
+// SIGNUP
+// ========================
 
-    const { data, error } = await supabase.auth.signUp({
+window.signup = async function () {
+
+    const email = document.getElementById("email").value
+    const password = document.getElementById("password").value
+
+    const { error } = await supabase.auth.signUp({
         email,
         password
-    });
+    })
 
-    if(error){
-        document.getElementById("authStatus").innerText = error.message;
+    if (error) {
+        document.getElementById("authStatus").innerText = error.message
     } else {
-        document.getElementById("authStatus").innerText = "Check your email!";
+        document.getElementById("authStatus").innerText =
+            "Signup successful! Check your email."
     }
 }
 
-async function login() {
+// ========================
+// LOGIN
+// ========================
 
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+window.login = async function () {
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const email = document.getElementById("email").value
+    const password = document.getElementById("password").value
+
+    const { error } = await supabase.auth.signInWithPassword({
         email,
         password
-    });
+    })
 
-    if(error){
-        document.getElementById("authStatus").innerText = error.message;
+    if (error) {
+        document.getElementById("authStatus").innerText = error.message
     } else {
-        document.getElementById("authStatus").innerText = "Logged in!";
-        showForum();
+        document.getElementById("authStatus").innerText = "Logged in!"
+        showForum()
     }
 }
 
-async function showForum(){
+// ========================
+// SHOW FORUM
+// ========================
 
-    document.getElementById("forumBox").style.display = "block";
+async function showForum() {
 
-    loadPosts();
+    forumBox.style.display = "block"
+
+    loadPosts()
 }
 
-async function createPost(){
+// ========================
+// CREATE POST
+// ========================
 
-    const title = document.getElementById("postTitle").value;
-    const content = document.getElementById("postContent").value;
+window.createPost = async function () {
 
-    const user = (await supabase.auth.getUser()).data.user;
+    const title = document.getElementById("postTitle").value.trim()
+    const content = document.getElementById("postContent").value.trim()
 
-    if(!user){
-        alert("Login first");
-        return;
+    if (!title || !content) {
+        alert("Fill everything out")
+        return
+    }
+
+    const {
+        data: { user }
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+        alert("Login first")
+        return
     }
 
     const { error } = await supabase
         .from("posts")
         .insert([
             {
-                title: title,
-                content: content,
-                author: user.email
+                title,
+                content,
+                author: user.email,
+                user_id: user.id
             }
-        ]);
+        ])
 
-    if(error){
-        alert(error.message);
+    if (error) {
+        alert(error.message)
     } else {
-        loadPosts();
+
+        document.getElementById("postTitle").value = ""
+        document.getElementById("postContent").value = ""
+
+        loadPosts()
     }
 }
 
-async function loadPosts(){
+// ========================
+// LOAD POSTS
+// ========================
+
+async function loadPosts() {
 
     const { data, error } = await supabase
         .from("posts")
         .select("*")
-        .order("id", { ascending:false });
+        .order("created_at", { ascending: false })
 
-    const postsDiv = document.getElementById("posts");
+    postsDiv.innerHTML = ""
 
-    postsDiv.innerHTML = "";
-
-    if(data){
-
-        data.forEach(post => {
-
-            postsDiv.innerHTML += `
-                <div style="
-                    border:1px solid #a5e7e4;
-                    padding:20px;
-                    margin:20px;
-                    border-radius:10px;
-                    background:#102d4e;
-                ">
-                    <h1>${post.title}</h1>
-                    <p>${post.content}</p>
-                    <small>Posted by ${post.author}</small>
-                </div>
-            `;
-        });
+    if (error) {
+        postsDiv.innerHTML = "Failed to load posts"
+        return
     }
+
+    data.forEach(post => {
+
+        const div = document.createElement("div")
+
+        div.style.border = "1px solid #a5e7e4"
+        div.style.padding = "20px"
+        div.style.margin = "20px"
+        div.style.borderRadius = "10px"
+        div.style.background = "#102d4e"
+
+        div.innerHTML = `
+            <h2>${escapeHTML(post.title)}</h2>
+            <p>${escapeHTML(post.content)}</p>
+            <small>
+                Posted by ${escapeHTML(post.author)}
+            </small>
+        `
+
+        postsDiv.appendChild(div)
+    })
 }
+
+// ========================
+// REALTIME POSTS
+// ========================
+
+supabase
+    .channel('posts-channel')
+    .on(
+        'postgres_changes',
+        {
+            event: '*',
+            schema: 'public',
+            table: 'posts'
+        },
+        payload => {
+            loadPosts()
+        }
+    )
+    .subscribe()
+
+// ========================
+// AUTO LOGIN
+// ========================
 
 supabase.auth.getSession().then(({ data: { session } }) => {
 
-    if(session){
-        showForum();
+    if (session) {
+        showForum()
     }
-});
+})
+
+// ========================
+// ESCAPE HTML
+// ========================
+
+function escapeHTML(str) {
+
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+}
 
 </script>
 
