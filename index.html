@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AhoyVR Forums</title>
+
+<link rel="stylesheet" href="index.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+
+<body>
+
+<h3>AhoyVR Forums</h3>
+
+<div id="authBox">
+    <h1>Login / Signup</h1>
+
+    <input type="email" id="email" placeholder="Email">
+    <br><br>
+
+    <input type="password" id="password" placeholder="Password">
+    <br><br>
+
+    <button onclick="signup()">Sign Up</button>
+    <button onclick="login()">Login</button>
+
+    <p id="authStatus"></p>
+</div>
+
+<hr>
+
+<div id="forumBox" style="display:none;">
+
+    <h1>Create Post</h1>
+
+    <input type="text" id="postTitle" placeholder="Post title">
+    <br><br>
+
+    <textarea id="postContent" placeholder="Write something..." rows="6" cols="40"></textarea>
+
+    <br><br>
+
+    <button onclick="createPost()">Post</button>
+
+    <hr>
+
+    <h1>Forum Posts</h1>
+
+    <div id="posts"></div>
+
+</div>
+
+<script>
+
+const SUPABASE_URL = "https://udrdowlpdakrmuydpnua.supabase.co/rest/v1/";
+const SUPABASE_KEY = "sb_publishable_86WOO7GUNSzQsDR3n-UMwQ_bxEhjqB8";
+
+const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+async function signup() {
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password
+    });
+
+    if(error){
+        document.getElementById("authStatus").innerText = error.message;
+    } else {
+        document.getElementById("authStatus").innerText = "Check your email!";
+    }
+}
+
+async function login() {
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if(error){
+        document.getElementById("authStatus").innerText = error.message;
+    } else {
+        document.getElementById("authStatus").innerText = "Logged in!";
+        showForum();
+    }
+}
+
+async function showForum(){
+
+    document.getElementById("forumBox").style.display = "block";
+
+    loadPosts();
+}
+
+async function createPost(){
+
+    const title = document.getElementById("postTitle").value;
+    const content = document.getElementById("postContent").value;
+
+    const user = (await supabase.auth.getUser()).data.user;
+
+    if(!user){
+        alert("Login first");
+        return;
+    }
+
+    const { error } = await supabase
+        .from("posts")
+        .insert([
+            {
+                title: title,
+                content: content,
+                author: user.email
+            }
+        ]);
+
+    if(error){
+        alert(error.message);
+    } else {
+        loadPosts();
+    }
+}
+
+async function loadPosts(){
+
+    const { data, error } = await supabase
+        .from("posts")
+        .select("*")
+        .order("id", { ascending:false });
+
+    const postsDiv = document.getElementById("posts");
+
+    postsDiv.innerHTML = "";
+
+    if(data){
+
+        data.forEach(post => {
+
+            postsDiv.innerHTML += `
+                <div style="
+                    border:1px solid #a5e7e4;
+                    padding:20px;
+                    margin:20px;
+                    border-radius:10px;
+                    background:#102d4e;
+                ">
+                    <h1>${post.title}</h1>
+                    <p>${post.content}</p>
+                    <small>Posted by ${post.author}</small>
+                </div>
+            `;
+        });
+    }
+}
+
+supabase.auth.getSession().then(({ data: { session } }) => {
+
+    if(session){
+        showForum();
+    }
+});
+
+</script>
+
+</body>
+</html>
